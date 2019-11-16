@@ -5,7 +5,7 @@ import json
 import os
 import requests
 import sys
-import my_data 
+import my_data
 from my_data import USR
 from my_data import KEY
 
@@ -38,29 +38,11 @@ parser.add_argument('--debug',
 args = parser.parse_args()
 args.baseurl += "/api/v3/user"
 
-if args.hp <= 0 or args.multiplier <= 0:
-    print("Value must be a positive number")
-    sys.exit(1)
-
-try:
-    if args.user_id is None:
-        args.user_id = USR
-except KeyError:
-    print("User ID must be set by the -u/--user-id option or by setting the environment variable 'HAB_API_USER'")
-    sys.exit(1)
-
-try:
-    if args.api_token is None:
-        args.api_token = KEY
-except KeyError:
-    print("API Token must be set by the -k/--api-token option or by setting the environment variable 'HAB_API_TOKEN'")
-    sys.exit(1)
+args.user_id = USR
+args.api_token = KEY
 
 headers = {"x-api-user": args.user_id, "x-api-key": args.api_token, "Content-Type": "application/json"}
 
 req = requests.get(args.baseurl, headers=headers)
 
-if req.json()['data']['stats']['hp'] < args.hp:
-    data = {}
-    data['stats.hp'] = req.json()['data']['stats']['hp'] * args.multiplier
-    stat = requests.put(args.baseurl, headers=headers, data=json.dumps(data))
+print(args)
