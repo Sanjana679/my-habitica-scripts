@@ -57,36 +57,59 @@ today = str(today)
 duetoday = []
 duebeforetoday = []
 dueaftertoday = []
+notdue = []
 
-req = requests.get(args.baseurl + "tasks/user?type=todos", headers=headers)
+dailies = []
 
-length = 0
-for todo in req.json()['data']:
-    # To send only today's todos to the top:    todo['date'][:10] == today:
-    # To send all overdue todos to the top:     todo['date'][:10] <= today:
-    if 'date' in todo and todo['date'] and todo['date'][:10] == today:
-        duetoday.append(todo)
-    elif 'date' in todo and todo['date'] and todo['date'][:10] > today:
-        dueaftertoday.append(todo)
-    elif 'date' in todo and todo['date'] and todo['date'][:10] < today:
-        duebeforetoday.append(todo)
+req_tags = requests.get(args.baseurl + "tags", headers=headers)
+req_todos = requests.get(args.baseurl + "tasks/user?type=todos", headers=headers)
+req_dailies = requests.get(args.baseurl + "tasks/user?type=dailys", headers=headers)
 
 
+for tag in req_tags.json()['data']:
+    for todo in req_todos.json()['data']:
+        # To send only today's todos to the top:    todo['date'][:10] == today:
+        # To send all overdue todos to the top:     todo['date'][:10] < today:
+
+        if 'date' in todo and todo['date'] and todo['date'][:10] == today and todo['tags'][0] == tag['id']:
+            duetoday.append(todo)
+            
+        elif 'date' in todo and todo['date'] and todo['date'][:10] > today and todo['tags'][0] == tag['id']:
+            dueaftertoday.append(todo)
+            
+        elif 'date' in todo and todo['date'] and todo['date'][:10] < today and todo['tags'][0] == tag['id']:
+            duebeforetoday.append(todo)
+
+        elif todo['tags'][0] == tag['id']: 
+            notdue.append(todo)
+    for daily in req_dailies.json()['data']:
+        
+        if daily['tags'][0] == tag['id']:
+            dailies.append(daily)
+    
+            
 
 count = 0
-## Push today's todos to the top
-for todo in [t for t in duetoday if t['date'][:10] == today]:
-    requests.post(args.baseurl + "tasks/" + todo['id'] + "/move/to/0", headers=headers)
- 
 # Push overdue todos to the top
 for todo in sorted(duebeforetoday, key=lambda k: k['date'], reverse=False):
     requests.post(args.baseurl + "tasks/" + todo['id'] + "/move/to/" + str(count), headers=headers)
     count = count + 1
 
-# Push todos after today to the top
-for todo in sorted(dueaftertoday, key=lambda k: k['date'], reverse=True):
-    requests.post(args.baseurl + "tasks/" + todo['id'] + "/move/to/" + str(count), headers=headers)
-    
-## Push today's todos to the top
+# Push today's todos afterwards
 for todo in [t for t in duetoday if t['date'][:10] == today]:
-    requests.post(args.baseurl + "tasks/" + todo['id'] + "/move/to/0", headers=headers)
+    requests.post(args.baseurl + "tasks/" + todo['id'] + "/move/to/" + str(count), headers=headers)
+    count = count + 1
+
+# Push todos after today afterwards
+for todo in sorted(dueaftertoday, key=lambda k: k['date'], reverse=False):
+    requests.post(args.baseurl + "tasks/" + todo['id'] + "/move/to/" + str(count), headers=headers)
+    count = count + 1
+
+for todo in notdue:
+    requests.post(args.baseurl + "tasks/" + todo['id'] + "/move/to/" + str(count), headers=headers)
+    count = count + 1
+
+count = 0
+for daily in dailies:
+    requests.post(args.baseurl + "tasks/" + daily['id'] + "/move/to/" + str(count), headers=headers)
+    count = count + 1
