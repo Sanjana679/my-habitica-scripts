@@ -66,22 +66,44 @@ req_todos = requests.get(args.baseurl + "tasks/user?type=todos", headers=headers
 req_dailies = requests.get(args.baseurl + "tasks/user?type=dailys", headers=headers)
 
 
+'''
+Sorting by tag and due date doesn't work too well in practice, but I'm going to leave it be for now
+'''
+
 for tag in req_tags.json()['data']:
     for todo in req_todos.json()['data']:
         # To send only today's todos to the top:    todo['date'][:10] == today:
         # To send all overdue todos to the top:     todo['date'][:10] < today:
 
-        if 'date' in todo and todo['date'] and todo['date'][:10] == today and todo['tags'][0] == tag['id']:
-            duetoday.append(todo)
-            
-        elif 'date' in todo and todo['date'] and todo['date'][:10] > today and todo['tags'][0] == tag['id']:
-            dueaftertoday.append(todo)
-            
-        elif 'date' in todo and todo['date'] and todo['date'][:10] < today and todo['tags'][0] == tag['id']:
-            duebeforetoday.append(todo)
+        #if the todo has a tag
+        if(len(todo['tags']) != 0):
 
-        elif todo['tags'][0] == tag['id']: 
-            notdue.append(todo)
+            if 'date' in todo and todo['date'] and todo['date'][:10] == today and todo['tags'][0] == tag['id']:
+                duetoday.append(todo)
+            
+            elif 'date' in todo and todo['date'] and todo['date'][:10] > today and todo['tags'][0] == tag['id']:
+                dueaftertoday.append(todo)
+            
+            elif 'date' in todo and todo['date'] and todo['date'][:10] < today and todo['tags'][0] == tag['id']:
+                duebeforetoday.append(todo)
+            
+            elif todo['tags'][0] == tag['id']: 
+                notdue.append(todo)
+
+        #if the todo does not have a tag
+        else:
+            if 'date' in todo and todo['date'] and todo['date'][:10] == today:
+                duetoday.append(todo)
+            
+            elif 'date' in todo and todo['date'] and todo['date'][:10] > today:
+                dueaftertoday.append(todo)
+            
+            elif 'date' in todo and todo['date'] and todo['date'][:10] < today:
+                duebeforetoday.append(todo)
+            
+            else:
+                notdue.append(todo)
+
     for daily in req_dailies.json()['data']:
         
         if daily['tags'][0] == tag['id']:
