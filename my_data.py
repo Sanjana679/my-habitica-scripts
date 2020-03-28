@@ -1,5 +1,0 @@
-import os
-
-USR = ''
-KEY = ''
-
